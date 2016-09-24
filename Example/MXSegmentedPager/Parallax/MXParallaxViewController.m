@@ -25,7 +25,7 @@
 #import "MXRefreshHeaderView.h"
 #import "MXCustomView.h"
 
-@interface MXParallaxViewController () <MXSegmentedPagerDelegate, MXSegmentedPagerDataSource, UITableViewDelegate, UITableViewDataSource, UIWebViewDelegate>
+@interface MXParallaxViewController () <MXSegmentedPagerDelegate, MXSegmentedPagerDataSource, UIPageViewControllerDelegate,UIPageViewControllerDataSource>
 @property (nonatomic, strong) MXRefreshHeaderView * cover;
 @property (nonatomic, strong) MXSegmentedPager  * segmentedPager;
 @property (nonatomic, strong) UITableView       * tableView;
@@ -34,12 +34,19 @@
 @property (nonatomic, strong) MXCustomView      * customView;
 @end
 
-@implementation MXParallaxViewController
+@implementation MXParallaxViewController {
+    
+    UIPageViewController* pageViewController;
+    NSArray* viewControllers;
+
+}
 
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.view.backgroundColor = UIColor.whiteColor;
     
+    [self loadPageViewController];
+
     [self.view addSubview:self.segmentedPager];
     
     // Parallax Header
@@ -57,7 +64,77 @@
     self.segmentedPager.segmentedControl.selectionIndicatorColor = [UIColor orangeColor];
     self.segmentedPager.segmentedControlPosition = MXSegmentedControlPositionTopOver;
     self.segmentedPager.segmentedControlEdgeInsets = UIEdgeInsetsMake(12, 12, 12, 12);
+    
 }
+
+- (void) loadPageViewController {
+    
+    UITableViewController* tableViewController = [[UITableViewController alloc] init];
+    tableViewController.view.backgroundColor = [UIColor redColor];
+    tableViewController.title = @"ViewController 1";
+    
+    UITableViewController* tableViewController2 = [[UITableViewController alloc] init];
+    tableViewController2.view.backgroundColor = [UIColor redColor];
+    tableViewController2.title = @"ViewController 2";
+
+    UITableViewController* tableViewController3 = [[UITableViewController alloc] init];
+    tableViewController3.view.backgroundColor = [UIColor redColor];
+    tableViewController3.title = @"ViewController 3";
+    
+    UITableViewController* tableViewController4 = [[UITableViewController alloc] init];
+    tableViewController4.view.backgroundColor = [UIColor redColor];
+    tableViewController4.title = @"ViewController 4";
+
+    viewControllers = @[tableViewController,tableViewController2,tableViewController3,tableViewController4];
+    
+    pageViewController = [[UIPageViewController alloc] initWithTransitionStyle:UIPageViewControllerTransitionStyleScroll navigationOrientation:UIPageViewControllerNavigationOrientationHorizontal options:nil];
+    pageViewController.delegate = self;
+    pageViewController.dataSource = self;
+
+    NSArray *initControllers = @[tableViewController];
+    [pageViewController setViewControllers:initControllers direction:UIPageViewControllerNavigationDirectionForward animated:NO completion:nil];
+
+    [self addChildViewController:pageViewController];
+    
+    // Set a segmented pager below the cover
+    _segmentedPager = [[MXSegmentedPager alloc] initWithPagerView:pageViewController.view];
+    _segmentedPager.delegate    = self;
+    _segmentedPager.dataSource  = self;
+
+//    [self.view addSubview:pageViewController.view];
+    pageViewController.view.backgroundColor = [UIColor orangeColor];
+    
+    [pageViewController didMoveToParentViewController:self];
+}
+
+- (UIViewController *)pageViewController:(UIPageViewController *)pageViewController viewControllerBeforeViewController:(UIViewController *)viewController {
+    NSInteger index = [viewControllers indexOfObject:viewController];
+    if (index == 0 ){
+        return nil;
+    }
+    return [viewControllers objectAtIndex:index-1];
+}
+
+- (UIViewController *)pageViewController:(UIPageViewController *)pageViewController viewControllerAfterViewController:(UIViewController *)viewController {
+    NSInteger index = [viewControllers indexOfObject:viewController];
+    if (index == [viewControllers count] - 1 ){
+        return nil;
+    }
+    return [viewControllers objectAtIndex:index+1];
+}
+
+- (void)pageViewController:(UIPageViewController *)_pageViewController didFinishAnimating:(BOOL)finished previousViewControllers:(NSArray<UIViewController *> *)previousViewControllers transitionCompleted:(BOOL)completed {
+    NSInteger index = [viewControllers indexOfObject:pageViewController.viewControllers[0]];
+    [self.segmentedPager.segmentedControl setSelectedSegmentIndex:index animated:YES];
+}
+
+- (void)segmentedPager:(MXSegmentedPager *)segmentedPager showPageAtIndex:(NSInteger)index reverse:(BOOL)reverse {
+    UIPageViewControllerNavigationDirection direction = (reverse)?UIPageViewControllerNavigationDirectionReverse:UIPageViewControllerNavigationDirectionForward;
+    [pageViewController setViewControllers:@[viewControllers[index]] direction:direction animated:YES completion:^(BOOL finished) {
+        
+    }];
+}
+
 
 - (void)viewWillLayoutSubviews {
     self.segmentedPager.frame = (CGRect){
@@ -77,57 +154,6 @@
     return _cover;
 }
 
-- (MXSegmentedPager *)segmentedPager {
-    if (!_segmentedPager) {
-        
-        // Set a segmented pager below the cover
-        _segmentedPager = [[MXSegmentedPager alloc] init];
-        _segmentedPager.delegate    = self;
-        _segmentedPager.dataSource  = self;
-    }
-    return _segmentedPager;
-}
-
-- (UITableView *)tableView {
-    if (!_tableView) {
-        //Add a table page
-        _tableView = [[UITableView alloc] init];
-        _tableView.delegate = self;
-        _tableView.dataSource = self;
-    }
-    return _tableView;
-}
-
-- (UIWebView *)webView {
-    if (!_webView) {
-        // Add a web page
-        _webView = [[UIWebView alloc] init];
-        _webView.delegate = self;
-        NSString *strURL = @"http://nshipster.com/";
-        NSURL *url = [NSURL URLWithString:strURL];
-        NSURLRequest *urlRequest = [NSURLRequest requestWithURL:url];
-        [_webView loadRequest:urlRequest];
-    }
-    return _webView;
-}
-
-- (UITextView *)textView {
-    if (!_textView) {
-        // Add a text page
-        _textView = [[UITextView alloc] init];
-        NSString *filePath = [[NSBundle mainBundle]pathForResource:@"LongText" ofType:@"txt"];
-        _textView.text = [[NSString alloc]initWithContentsOfFile:filePath encoding:NSUTF8StringEncoding error:nil];
-    }
-    return _textView;
-}
-
-- (MXCustomView *)customView {
-    if (!_customView) {
-        _customView = [[MXCustomView alloc] init];
-    }
-    return _customView;
-}
-
 #pragma mark <MXSegmentedPagerDelegate>
 
 - (CGFloat)heightForSegmentedControlInSegmentedPager:(MXSegmentedPager *)segmentedPager {
@@ -135,69 +161,21 @@
 }
 
 - (void)segmentedPager:(MXSegmentedPager *)segmentedPager didSelectViewWithTitle:(NSString *)title {
-    NSLog(@"%@ page selected.", title);
+
 }
 
 #pragma mark <MXSegmentedPagerDataSource>
 
 - (NSInteger)numberOfPagesInSegmentedPager:(MXSegmentedPager *)segmentedPager {
-    return 4;
+    return [viewControllers count];
 }
 
 - (NSString *)segmentedPager:(MXSegmentedPager *)segmentedPager titleForSectionAtIndex:(NSInteger)index {
-    return @[@"Table", @"Web", @"Text", @"Custom"][index];
-}
-
-- (UIView *)segmentedPager:(MXSegmentedPager *)segmentedPager viewForPageAtIndex:(NSInteger)index {
-    return @[self.tableView, self.webView, self.textView, self.customView][index];
-}
-
-- (void) segmentedPager:(MXSegmentedPager *)segmentedPager didAppearViewWithIndex:(NSInteger)index {
-    NSLog(@"Did Appear %d",index);
-}
-
-- (void) segmentedPager:(MXSegmentedPager *)segmentedPager didDisappearViewWithIndex:(NSInteger)index{
-    NSLog(@"Did DisAppear %d",index);
-}
-
-- (void) segmentedPager:(MXSegmentedPager *)segmentedPager willDisppearViewWithIndex:(NSInteger)index {
-    NSLog(@"Will Disappear %d",index);
-}
-
-- (void) segmentedPager:(MXSegmentedPager *)segmentedPager willAppearViewWithIndex:(NSInteger)index {
-    NSLog(@"Will Appear %d",index);
-}
-
-#pragma mark <UITableViewDelegate>
-
-- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    
-    NSInteger index = (indexPath.row % 2) + 1;
-    [self.segmentedPager.pager showPageAtIndex:index animated:YES];
-}
-
-#pragma mark <UITableViewDataSource>
-
-- (NSInteger) tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return 50;
-}
-
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    static NSString *CellIdentifier = @"Cell";
-    
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-    if (cell == nil) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
+    NSString* title = [viewControllers[index] title];
+    if (!title){
+        title = @"";
     }
-    cell.textLabel.text = (indexPath.row % 2)? @"Text" : @"Web";
-    
-    return cell;
-}
-
-#pragma mark <UIWebViewDelegate>
-
-- (void)webViewDidFinishLoad:(UIWebView *)webView {
-
+    return title;
 }
 
 @end

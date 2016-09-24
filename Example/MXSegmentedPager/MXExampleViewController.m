@@ -31,7 +31,7 @@
     
     self.segmentedPager.backgroundColor = [UIColor whiteColor];
     
-    self.segmentedPager.pager.transitionStyle = MXPagerViewTransitionStyleTab;
+//    self.segmentedPager.pager.transitionStyle = MXPagerViewTransitionStyleTab;
     
     self.segmentedPager.segmentedControl.backgroundColor = [UIColor whiteColor];
     self.segmentedPager.segmentedControl.titleTextAttributes = @{NSForegroundColorAttributeName : [UIColor blackColor]};
@@ -54,7 +54,7 @@
 #pragma mark <MXPageControllerDataSource>
 
 - (NSString *)segmentedPager:(MXSegmentedPager *)segmentedPager titleForSectionAtIndex:(NSInteger)index {
-    return @[@"Simple", @"Parallax", @"Storyboard"][index];
+    return @[@"Parallax"][index];
 }
 
 @end
