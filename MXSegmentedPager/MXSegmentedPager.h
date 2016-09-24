@@ -72,13 +72,7 @@ typedef NS_ENUM(NSInteger, MXSegmentedControlPosition) {
  */
 - (void)segmentedPager:(MXSegmentedPager *)segmentedPager didSelectViewWithIndex:(NSInteger)index;
 
-- (void)segmentedPager:(MXSegmentedPager *)segmentedPager didAppearViewWithIndex:(NSInteger)index;
-
-- (void)segmentedPager:(MXSegmentedPager *)segmentedPager willAppearViewWithIndex:(NSInteger)index;
-
-- (void)segmentedPager:(MXSegmentedPager *)segmentedPager didDisappearViewWithIndex:(NSInteger)index;
-
-- (void)segmentedPager:(MXSegmentedPager *)segmentedPager willDisppearViewWithIndex:(NSInteger)index;
+- (void)segmentedPager:(MXSegmentedPager *)segmentedPager showPageAtIndex:(NSInteger)index reverse:(BOOL) reverse;
 
 /**
  Asks the delegate to return the height of the segmented control in the segmented-pager.
@@ -136,6 +130,8 @@ typedef NS_ENUM(NSInteger, MXSegmentedControlPosition) {
  */
 - (NSInteger)numberOfPagesInSegmentedPager:(MXSegmentedPager *)segmentedPager;
 
+@optional
+
 /**
  Asks the data source for a view to insert in a particular page of the segmented-pager.
  
@@ -145,8 +141,6 @@ typedef NS_ENUM(NSInteger, MXSegmentedControlPosition) {
  @return An object inheriting from UIView that the segmented-pager can use for the specified page.
  */
 - (__kindof UIView*)segmentedPager:(MXSegmentedPager *)segmentedPager viewForPageAtIndex:(NSInteger)index;
-
-@optional
 
 /**
  Asks the data source for a title to assign to a particular page of the segmented-pager. The title will be used depending on the HMSegmentedControlType you have choosen.
@@ -218,7 +212,7 @@ typedef NS_ENUM(NSInteger, MXSegmentedControlPosition) {
 /**
  The pager. The pager will be placed above or below the segmented control depending on the segmentedControlPosition property.
  */
-@property (nonatomic, readonly) MXPagerView *pager;
+//@property (nonatomic, readonly) MXPagerView *pager;
 
 /**
  The padding from the top, left, right, and bottom of the segmentedControl
@@ -234,6 +228,8 @@ typedef NS_ENUM(NSInteger, MXSegmentedControlPosition) {
  Scrolls the main contentView back to the top position
  */
 - (void)scrollToTopAnimated:(BOOL)animated;
+
+- (instancetype)initWithPagerView:(UIView*) view;
 
 @end
 

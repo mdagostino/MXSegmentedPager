@@ -27,13 +27,21 @@
 @interface MXSegmentedPager () <MXScrollViewDelegate, MXPagerViewDelegate, MXPagerViewDataSource>
 @property (nonatomic, strong) MXScrollView          *contentView;
 @property (nonatomic, strong) HMSegmentedControl    *segmentedControl;
-@property (nonatomic, strong) MXPagerView           *pager;
+@property (nonatomic, strong) UIView           *pager;
 @end
 
 @implementation MXSegmentedPager {
     CGFloat     _controlHeight;
     NSInteger   _count;
     NSInteger   _currentIndex;
+}
+
+- (instancetype)initWithPagerView:(UIView*) view {
+    self = [super init];
+    if (self) {
+        self.pager = view;
+    }
+    return self;
 }
 
 - (void)reloadData {
@@ -83,7 +91,7 @@
  
     _currentIndex = 0;
     
-    [self.pager reloadData];
+//    [self.pager reloadData];
 }
 
 - (void)scrollToTopAnimated:(BOOL)animated {
@@ -157,6 +165,7 @@
     frame.size.height -= self.contentView.parallaxHeader.minimumHeight;
     
     self.pager.frame = frame;
+    [self.contentView addSubview:self.pager];
 }
 
 #pragma mark Properties
@@ -184,18 +193,16 @@
     return _segmentedControl;
 }
 
-- (MXPagerView *)pager {
+- (UIView *)pager {
     if (!_pager) {
-        _pager = [[MXPagerView alloc] init];
-        _pager.delegate = self;
-        _pager.dataSource = self;
         [self.contentView addSubview:_pager];
     }
     return _pager;
 }
 
 - (UIView*)selectedPage {
-    return self.pager.selectedPage;
+    return nil;
+//    return self.pager.selectedPage;
 }
 
 - (void)setSegmentedControlPosition:(MXSegmentedControlPosition)segmentedControlPosition {
@@ -223,11 +230,11 @@
 }
 
 - (BOOL)scrollView:(MXScrollView *)scrollView shouldScrollWithSubView:(UIView *)subView {
-    UIView<MXPageProtocol> *page = (id) self.pager.selectedPage;
-    
-    if ([page respondsToSelector:@selector(segmentedPager:shouldScrollWithView:)]) {
-        return [page segmentedPager:self shouldScrollWithView:subView];
-    }
+//    UIView<MXPageProtocol> *page = (id) self.pager.selectedPage;
+//    
+//    if ([page respondsToSelector:@selector(segmentedPager:shouldScrollWithView:)]) {
+//        return [page segmentedPager:self shouldScrollWithView:subView];
+//    }
     return YES;
 }
 
@@ -241,7 +248,9 @@
 #pragma mark HMSegmentedControl target
 
 - (void)pageControlValueChanged:(HMSegmentedControl*)segmentedControl {
-    [self.pager showPageAtIndex:segmentedControl.selectedSegmentIndex animated:YES];
+    BOOL reverse = (_currentIndex - segmentedControl.selectedSegmentIndex) > 0 ;
+    [self.delegate segmentedPager:segmentedControl showPageAtIndex:segmentedControl.selectedSegmentIndex reverse:reverse];
+    _currentIndex = segmentedControl.selectedSegmentIndex;
 }
 
 #pragma mark <MXPagerViewDelegate>
@@ -250,28 +259,15 @@
     if (index == self.segmentedControl.selectedSegmentIndex){
         return;
     }
-    if ([self.delegate respondsToSelector:@selector(segmentedPager:willDisappearViewWithIndex:)]){
-        [self.delegate segmentedPager:self willDisppearViewWithIndex:self.segmentedControl.selectedSegmentIndex];
-    }
     [self.segmentedControl setSelectedSegmentIndex:index animated:YES];
-    if ([self.delegate respondsToSelector:@selector(segmentedPager:willAppearViewWithIndex:)]){
-        [self.delegate segmentedPager:self willAppearViewWithIndex:self.segmentedControl.selectedSegmentIndex];
-    }
 }
 
 - (void)pagerView:(MXPagerView *)pagerView didMoveToPageAtIndex:(NSInteger)index {
     if (index == _currentIndex){
         return;
     }
-    if ([self.delegate respondsToSelector:@selector(segmentedPager:didDisappearViewWithIndex:)]){
-        [self.delegate segmentedPager:self didDisappearViewWithIndex:_currentIndex];
-    }
     [self.segmentedControl setSelectedSegmentIndex:index animated:NO];
     [self changedToIndex:index];
-    if ([self.delegate respondsToSelector:@selector(segmentedPager:didAppearViewWithIndex:)]){
-        [self.delegate segmentedPager:self didAppearViewWithIndex:index];
-    }
-    
 }
 
 #pragma mark <MXPagerViewDataSource>
@@ -293,7 +289,7 @@
     }
     
     NSString* title = self.segmentedControl.sectionTitles[index];
-    UIView* view = self.pager.selectedPage;
+    UIView* view = [self selectedPage];
                     
     if ([self.delegate respondsToSelector:@selector(segmentedPager:didSelectViewWithTitle:)]) {
         [self.delegate segmentedPager:self didSelectViewWithTitle:title];
